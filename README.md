@@ -1,1 +1,1 @@
-# ai-temperature-predictor
+# AI Temperature Predictor
