@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Temperature Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/brain.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f4f4f9;
+        text-align: center;
+        padding: 40px;
+        direction: ltr;
+      }
+      h2,
+      h3 {
+        color: #333;
+      }
+      label {
+        margin: 10px;
+        display: block;
+        font-size: 18px;
+      }
+      input[type="number"] {
+        padding: 6px;
+        font-size: 16px;
+        width: 80px;
+        margin-top: 5px;
+      }
+      button {
+        margin: 10px 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #2980b9;
+      }
+      #result {
+        margin-top: 20px;
+        font-size: 20px;
+        color: #222;
+      }
+      canvas {
+        max-width: 600px;
+        margin: 40px auto;
+        display: block;
+      }
+      #history {
+        text-align: left;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      #history li {
+        list-style-type: none;
+        background: #fff;
+        margin-bottom: 5px;
+        padding: 10px;
+        border-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Temperature Prediction Based on Hour and Month (°C)</h2>
+
+    <label
+      >Hour (0 - 23):<br /><input type="number" id="hour" min="0" max="23"
+    /></label>
+    <label
+      >Month (1 - 12):<br /><input
+        type="number"
+        id="month_predict"
+        min="1"
+        max="12"
+    /></label>
+    <button onclick="predictNow()">Predict Now</button>
+    <p id="result"></p>
+
+    <h3>Prediction History</h3>
+    <ul id="history"></ul>
+
+    <label
+      >Month for Chart (1 - 12):<br /><input
+        type="number"
+        id="month"
+        min="1"
+        max="12"
+    /></label>
+    <button onclick="drawGraph()">Draw Chart</button>
+    <button onclick="downloadChart()">Download Chart as Image</button>
+    <button onclick="saveModel()">Save Model as File</button>
+
+    <canvas id="tempChart"></canvas>
+
+    <script>
+      // Training data: input = {hour, month}, output = temperature (normalized °C)
+      const trainingData = [
+        // January
+        { input: { hour: 0, month: 1 }, output: { temperature: -1 / 50 } },
+        { input: { hour: 3, month: 1 }, output: { temperature: -2 / 50 } },
+        { input: { hour: 6, month: 1 }, output: { temperature: -2 / 50 } },
+        { input: { hour: 12, month: 1 }, output: { temperature: 1 / 50 } },
+        { input: { hour: 18, month: 1 }, output: { temperature: 0 / 50 } },
+        { input: { hour: 21, month: 1 }, output: { temperature: -1 / 50 } },
+
+        // February
+        { input: { hour: 0, month: 2 }, output: { temperature: 0 / 50 } },
+        { input: { hour: 3, month: 2 }, output: { temperature: -1 / 50 } },
+        { input: { hour: 6, month: 2 }, output: { temperature: 0 / 50 } },
+        { input: { hour: 12, month: 2 }, output: { temperature: 3 / 50 } },
+        { input: { hour: 18, month: 2 }, output: { temperature: 2 / 50 } },
+        { input: { hour: 21, month: 2 }, output: { temperature: 1 / 50 } },
+
+        // March
+        { input: { hour: 0, month: 3 }, output: { temperature: 2 / 50 } },
+        { input: { hour: 3, month: 3 }, output: { temperature: 1 / 50 } },
+        { input: { hour: 6, month: 3 }, output: { temperature: 2 / 50 } },
+        { input: { hour: 12, month: 3 }, output: { temperature: 7 / 50 } },
+        { input: { hour: 18, month: 3 }, output: { temperature: 5 / 50 } },
+        { input: { hour: 21, month: 3 }, output: { temperature: 3 / 50 } },
+
+        // April
+        { input: { hour: 0, month: 4 }, output: { temperature: 5 / 50 } },
+        { input: { hour: 3, month: 4 }, output: { temperature: 4 / 50 } },
+        { input: { hour: 6, month: 4 }, output: { temperature: 6 / 50 } },
+        { input: { hour: 12, month: 4 }, output: { temperature: 12 / 50 } },
+        { input: { hour: 18, month: 4 }, output: { temperature: 10 / 50 } },
+        { input: { hour: 21, month: 4 }, output: { temperature: 7 / 50 } },
+
+        // May
+        { input: { hour: 0, month: 5 }, output: { temperature: 9 / 50 } },
+        { input: { hour: 3, month: 5 }, output: { temperature: 8 / 50 } },
+        { input: { hour: 6, month: 5 }, output: { temperature: 10 / 50 } },
+        { input: { hour: 12, month: 5 }, output: { temperature: 17 / 50 } },
+        { input: { hour: 18, month: 5 }, output: { temperature: 15 / 50 } },
+        { input: { hour: 21, month: 5 }, output: { temperature: 12 / 50 } },
+
+        // June
+        { input: { hour: 0, month: 6 }, output: { temperature: 12 / 50 } },
+        { input: { hour: 3, month: 6 }, output: { temperature: 11 / 50 } },
+        { input: { hour: 6, month: 6 }, output: { temperature: 13 / 50 } },
+        { input: { hour: 12, month: 6 }, output: { temperature: 20 / 50 } },
+        { input: { hour: 18, month: 6 }, output: { temperature: 18 / 50 } },
+        { input: { hour: 21, month: 6 }, output: { temperature: 15 / 50 } },
+
+        // July
+        { input: { hour: 0, month: 7 }, output: { temperature: 14 / 50 } },
+        { input: { hour: 3, month: 7 }, output: { temperature: 13 / 50 } },
+        { input: { hour: 6, month: 7 }, output: { temperature: 15 / 50 } },
+        { input: { hour: 12, month: 7 }, output: { temperature: 22 / 50 } },
+        { input: { hour: 18, month: 7 }, output: { temperature: 20 / 50 } },
+        { input: { hour: 21, month: 7 }, output: { temperature: 17 / 50 } },
+
+        // August
+        { input: { hour: 0, month: 8 }, output: { temperature: 13 / 50 } },
+        { input: { hour: 3, month: 8 }, output: { temperature: 12 / 50 } },
+        { input: { hour: 6, month: 8 }, output: { temperature: 14 / 50 } },
+        { input: { hour: 12, month: 8 }, output: { temperature: 21 / 50 } },
+        { input: { hour: 18, month: 8 }, output: { temperature: 19 / 50 } },
+        { input: { hour: 21, month: 8 }, output: { temperature: 16 / 50 } },
+
+        // September
+        { input: { hour: 0, month: 9 }, output: { temperature: 10 / 50 } },
+        { input: { hour: 3, month: 9 }, output: { temperature: 9 / 50 } },
+        { input: { hour: 6, month: 9 }, output: { temperature: 11 / 50 } },
+        { input: { hour: 12, month: 9 }, output: { temperature: 17 / 50 } },
+        { input: { hour: 18, month: 9 }, output: { temperature: 15 / 50 } },
+        { input: { hour: 21, month: 9 }, output: { temperature: 12 / 50 } },
+
+        // October
+        { input: { hour: 0, month: 10 }, output: { temperature: 7 / 50 } },
+        { input: { hour: 3, month: 10 }, output: { temperature: 6 / 50 } },
+        { input: { hour: 6, month: 10 }, output: { temperature: 8 / 50 } },
+        { input: { hour: 12, month: 10 }, output: { temperature: 13 / 50 } },
+        { input: { hour: 18, month: 10 }, output: { temperature: 11 / 50 } },
+        { input: { hour: 21, month: 10 }, output: { temperature: 9 / 50 } },
+
+        // November
+        { input: { hour: 0, month: 11 }, output: { temperature: 3 / 50 } },
+        { input: { hour: 3, month: 11 }, output: { temperature: 2 / 50 } },
+        { input: { hour: 6, month: 11 }, output: { temperature: 4 / 50 } },
+        { input: { hour: 12, month: 11 }, output: { temperature: 7 / 50 } },
+        { input: { hour: 18, month: 11 }, output: { temperature: 5 / 50 } },
+        { input: { hour: 21, month: 11 }, output: { temperature: 4 / 50 } },
+
+        // December
+        { input: { hour: 0, month: 12 }, output: { temperature: 0 / 50 } },
+        { input: { hour: 3, month: 12 }, output: { temperature: -1 / 50 } },
+        { input: { hour: 6, month: 12 }, output: { temperature: 0 / 50 } },
+        { input: { hour: 12, month: 12 }, output: { temperature: 3 / 50 } },
+        { input: { hour: 18, month: 12 }, output: { temperature: 2 / 50 } },
+        { input: { hour: 21, month: 12 }, output: { temperature: 1 / 50 } },
+      ];
+
+      // Create the neural network with one hidden layer of 5 neurons
+      const net = new brain.NeuralNetwork({ hiddenLayers: [5] });
+
+      // Train the model
+      net.train(trainingData, {
+        iterations: 5000,
+        learningRate: 0.05,
+        errorThresh: 0.005,
+        log: true,
+        logPeriod: 1000,
+      });
+
+      // Predict temperature based on input hour and month
+      function predictNow() {
+        const hour = parseFloat(document.getElementById("hour").value);
+        const month = parseFloat(
+          document.getElementById("month_predict").value
+        );
+
+        if (isNaN(hour) || isNaN(month)) {
+          document.getElementById("result").textContent =
+            "Please enter both hour and month.";
+          return;
+        }
+
+        const input = { hour: hour, month: month };
+        const prediction = +(net.run(input).temperature * 50).toFixed(1); // scale back to °C
+
+        document.getElementById(
+          "result"
+        ).textContent = `Predicted Temperature: ${prediction}°C`;
+
+        const historyEntry = `Hour: ${hour}:00, Month: ${month} → ${prediction}°C`;
+        const li = document.createElement("li");
+        li.textContent = historyEntry;
+        document.getElementById("history").prepend(li);
+      }
+
+      let chart;
+
+      // Draw line chart for a specific month
+      function drawGraph() {
+        const month = parseFloat(document.getElementById("month").value);
+        if (isNaN(month) || month < 1 || month > 12) {
+          alert("Please enter a valid month (1-12) to draw the chart.");
+          return;
+        }
+        const hours = Array.from({ length: 24 }, (_, i) => i);
+        const temps = hours.map((hour) => {
+          const input = { hour: hour, month: month };
+          return +(net.run(input).temperature * 50).toFixed(1); // scale back to °C
+        });
+
+        const ctx = document.getElementById("tempChart").getContext("2d");
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: hours.map((h) => `${h}:00`),
+            datasets: [
+              {
+                label: `Temperature in Month ${month}`,
+                data: temps,
+                fill: false,
+                borderColor: "#e67e22",
+                tension: 0.3,
+              },
+            ],
+          },
+          options: {
+            scales: {
+              y: {
+                title: { display: true, text: "Temperature (°C)" },
+              },
+              x: {
+                title: { display: true, text: "Hour of Day" },
+              },
+            },
+          },
+        });
+      }
+
+      // Download the chart as PNG
+      function downloadChart() {
+        const canvas = document.getElementById("tempChart");
+        const ctx = canvas.getContext("2d");
+
+        // draw white background before exporting
+        const tmp = document.createElement("canvas");
+        tmp.width = canvas.width;
+        tmp.height = canvas.height;
+        const tmpCtx = tmp.getContext("2d");
+
+        // fill background with white
+        tmpCtx.fillStyle = "#ffffff";
+        tmpCtx.fillRect(0, 0, tmp.width, tmp.height);
+
+        // draw the chart onto the white background
+        tmpCtx.drawImage(canvas, 0, 0);
+
+        const link = document.createElement("a");
+        link.download = "temperature_chart.png";
+        link.href = tmp.toDataURL("image/png");
+        link.click();
+      }
+
+      // Save the trained model as a JSON file
+      function saveModel() {
+        const modelJSON = JSON.stringify(net.toJSON(), null, 2);
+        const blob = new Blob([modelJSON], { type: "application/json" });
+        const link = document.createElement("a");
+        link.download = "temperature_model.json";
+        link.href = URL.createObjectURL(blob);
+        link.click();
+      }
+    </script>
+  </body>
+</html>
