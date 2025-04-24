@@ -14,8 +14,8 @@
         padding: 40px;
         direction: ltr;
       }
-      h2,
-      h3 {
+      h1,
+      h2 {
         color: #333;
       }
       label {
@@ -68,7 +68,7 @@
     </style>
   </head>
   <body>
-    <h2>Temperature Prediction Based on Hour and Month (°C)</h2>
+    <h1>Temperature Predictor</h1>
 
     <label
       >Hour (0 - 23):<br /><input type="number" id="hour" min="0" max="23"
@@ -83,7 +83,7 @@
     <button onclick="predictNow()">Predict Now</button>
     <p id="result"></p>
 
-    <h3>Prediction History</h3>
+    <h2>Prediction History</h2>
     <ul id="history"></ul>
 
     <label
@@ -100,111 +100,121 @@
     <canvas id="tempChart"></canvas>
 
     <script>
-      // Training data: input = {hour, month}, output = temperature (normalized °C)
+      // Training data: input = {hour, month}, output = temperature
       const trainingData = [
         // January
-        { input: { hour: 0, month: 1 }, output: { temperature: -1 / 50 } },
-        { input: { hour: 3, month: 1 }, output: { temperature: -2 / 50 } },
-        { input: { hour: 6, month: 1 }, output: { temperature: -2 / 50 } },
-        { input: { hour: 12, month: 1 }, output: { temperature: 1 / 50 } },
-        { input: { hour: 18, month: 1 }, output: { temperature: 0 / 50 } },
-        { input: { hour: 21, month: 1 }, output: { temperature: -1 / 50 } },
+        { input: { hour: 0, month: 1 }, output: { temperature: -1 } },
+        { input: { hour: 3, month: 1 }, output: { temperature: -2 } },
+        { input: { hour: 6, month: 1 }, output: { temperature: -2 } },
+        { input: { hour: 12, month: 1 }, output: { temperature: 1 } },
+        { input: { hour: 18, month: 1 }, output: { temperature: 0 } },
+        { input: { hour: 21, month: 1 }, output: { temperature: -1 } },
 
         // February
-        { input: { hour: 0, month: 2 }, output: { temperature: 0 / 50 } },
-        { input: { hour: 3, month: 2 }, output: { temperature: -1 / 50 } },
-        { input: { hour: 6, month: 2 }, output: { temperature: 0 / 50 } },
-        { input: { hour: 12, month: 2 }, output: { temperature: 3 / 50 } },
-        { input: { hour: 18, month: 2 }, output: { temperature: 2 / 50 } },
-        { input: { hour: 21, month: 2 }, output: { temperature: 1 / 50 } },
+        { input: { hour: 0, month: 2 }, output: { temperature: 0 } },
+        { input: { hour: 3, month: 2 }, output: { temperature: -1 } },
+        { input: { hour: 6, month: 2 }, output: { temperature: 0 } },
+        { input: { hour: 12, month: 2 }, output: { temperature: 3 } },
+        { input: { hour: 18, month: 2 }, output: { temperature: 2 } },
+        { input: { hour: 21, month: 2 }, output: { temperature: 1 } },
 
         // March
-        { input: { hour: 0, month: 3 }, output: { temperature: 2 / 50 } },
-        { input: { hour: 3, month: 3 }, output: { temperature: 1 / 50 } },
-        { input: { hour: 6, month: 3 }, output: { temperature: 2 / 50 } },
-        { input: { hour: 12, month: 3 }, output: { temperature: 7 / 50 } },
-        { input: { hour: 18, month: 3 }, output: { temperature: 5 / 50 } },
-        { input: { hour: 21, month: 3 }, output: { temperature: 3 / 50 } },
+        { input: { hour: 0, month: 3 }, output: { temperature: 2 } },
+        { input: { hour: 3, month: 3 }, output: { temperature: 1 } },
+        { input: { hour: 6, month: 3 }, output: { temperature: 2 } },
+        { input: { hour: 12, month: 3 }, output: { temperature: 7 } },
+        { input: { hour: 18, month: 3 }, output: { temperature: 5 } },
+        { input: { hour: 21, month: 3 }, output: { temperature: 3 } },
 
         // April
-        { input: { hour: 0, month: 4 }, output: { temperature: 5 / 50 } },
-        { input: { hour: 3, month: 4 }, output: { temperature: 4 / 50 } },
-        { input: { hour: 6, month: 4 }, output: { temperature: 6 / 50 } },
-        { input: { hour: 12, month: 4 }, output: { temperature: 12 / 50 } },
-        { input: { hour: 18, month: 4 }, output: { temperature: 10 / 50 } },
-        { input: { hour: 21, month: 4 }, output: { temperature: 7 / 50 } },
+        { input: { hour: 0, month: 4 }, output: { temperature: 5 } },
+        { input: { hour: 3, month: 4 }, output: { temperature: 4 } },
+        { input: { hour: 6, month: 4 }, output: { temperature: 6 } },
+        { input: { hour: 12, month: 4 }, output: { temperature: 12 } },
+        { input: { hour: 18, month: 4 }, output: { temperature: 10 } },
+        { input: { hour: 21, month: 4 }, output: { temperature: 7 } },
 
         // May
-        { input: { hour: 0, month: 5 }, output: { temperature: 9 / 50 } },
-        { input: { hour: 3, month: 5 }, output: { temperature: 8 / 50 } },
-        { input: { hour: 6, month: 5 }, output: { temperature: 10 / 50 } },
-        { input: { hour: 12, month: 5 }, output: { temperature: 17 / 50 } },
-        { input: { hour: 18, month: 5 }, output: { temperature: 15 / 50 } },
-        { input: { hour: 21, month: 5 }, output: { temperature: 12 / 50 } },
+        { input: { hour: 0, month: 5 }, output: { temperature: 9 } },
+        { input: { hour: 3, month: 5 }, output: { temperature: 8 } },
+        { input: { hour: 6, month: 5 }, output: { temperature: 10 } },
+        { input: { hour: 12, month: 5 }, output: { temperature: 17 } },
+        { input: { hour: 18, month: 5 }, output: { temperature: 15 } },
+        { input: { hour: 21, month: 5 }, output: { temperature: 12 } },
 
         // June
-        { input: { hour: 0, month: 6 }, output: { temperature: 12 / 50 } },
-        { input: { hour: 3, month: 6 }, output: { temperature: 11 / 50 } },
-        { input: { hour: 6, month: 6 }, output: { temperature: 13 / 50 } },
-        { input: { hour: 12, month: 6 }, output: { temperature: 20 / 50 } },
-        { input: { hour: 18, month: 6 }, output: { temperature: 18 / 50 } },
-        { input: { hour: 21, month: 6 }, output: { temperature: 15 / 50 } },
+        { input: { hour: 0, month: 6 }, output: { temperature: 12 } },
+        { input: { hour: 3, month: 6 }, output: { temperature: 11 } },
+        { input: { hour: 6, month: 6 }, output: { temperature: 13 } },
+        { input: { hour: 12, month: 6 }, output: { temperature: 20 } },
+        { input: { hour: 18, month: 6 }, output: { temperature: 18 } },
+        { input: { hour: 21, month: 6 }, output: { temperature: 15 } },
 
         // July
-        { input: { hour: 0, month: 7 }, output: { temperature: 14 / 50 } },
-        { input: { hour: 3, month: 7 }, output: { temperature: 13 / 50 } },
-        { input: { hour: 6, month: 7 }, output: { temperature: 15 / 50 } },
-        { input: { hour: 12, month: 7 }, output: { temperature: 22 / 50 } },
-        { input: { hour: 18, month: 7 }, output: { temperature: 20 / 50 } },
-        { input: { hour: 21, month: 7 }, output: { temperature: 17 / 50 } },
+        { input: { hour: 0, month: 7 }, output: { temperature: 14 } },
+        { input: { hour: 3, month: 7 }, output: { temperature: 13 } },
+        { input: { hour: 6, month: 7 }, output: { temperature: 15 } },
+        { input: { hour: 12, month: 7 }, output: { temperature: 22 } },
+        { input: { hour: 18, month: 7 }, output: { temperature: 20 } },
+        { input: { hour: 21, month: 7 }, output: { temperature: 17 } },
 
         // August
-        { input: { hour: 0, month: 8 }, output: { temperature: 13 / 50 } },
-        { input: { hour: 3, month: 8 }, output: { temperature: 12 / 50 } },
-        { input: { hour: 6, month: 8 }, output: { temperature: 14 / 50 } },
-        { input: { hour: 12, month: 8 }, output: { temperature: 21 / 50 } },
-        { input: { hour: 18, month: 8 }, output: { temperature: 19 / 50 } },
-        { input: { hour: 21, month: 8 }, output: { temperature: 16 / 50 } },
+        { input: { hour: 0, month: 8 }, output: { temperature: 13 } },
+        { input: { hour: 3, month: 8 }, output: { temperature: 12 } },
+        { input: { hour: 6, month: 8 }, output: { temperature: 14 } },
+        { input: { hour: 12, month: 8 }, output: { temperature: 21 } },
+        { input: { hour: 18, month: 8 }, output: { temperature: 19 } },
+        { input: { hour: 21, month: 8 }, output: { temperature: 16 } },
 
         // September
-        { input: { hour: 0, month: 9 }, output: { temperature: 10 / 50 } },
-        { input: { hour: 3, month: 9 }, output: { temperature: 9 / 50 } },
-        { input: { hour: 6, month: 9 }, output: { temperature: 11 / 50 } },
-        { input: { hour: 12, month: 9 }, output: { temperature: 17 / 50 } },
-        { input: { hour: 18, month: 9 }, output: { temperature: 15 / 50 } },
-        { input: { hour: 21, month: 9 }, output: { temperature: 12 / 50 } },
+        { input: { hour: 0, month: 9 }, output: { temperature: 10 } },
+        { input: { hour: 3, month: 9 }, output: { temperature: 9 } },
+        { input: { hour: 6, month: 9 }, output: { temperature: 11 } },
+        { input: { hour: 12, month: 9 }, output: { temperature: 17 } },
+        { input: { hour: 18, month: 9 }, output: { temperature: 15 } },
+        { input: { hour: 21, month: 9 }, output: { temperature: 12 } },
 
         // October
-        { input: { hour: 0, month: 10 }, output: { temperature: 7 / 50 } },
-        { input: { hour: 3, month: 10 }, output: { temperature: 6 / 50 } },
-        { input: { hour: 6, month: 10 }, output: { temperature: 8 / 50 } },
-        { input: { hour: 12, month: 10 }, output: { temperature: 13 / 50 } },
-        { input: { hour: 18, month: 10 }, output: { temperature: 11 / 50 } },
-        { input: { hour: 21, month: 10 }, output: { temperature: 9 / 50 } },
+        { input: { hour: 0, month: 10 }, output: { temperature: 7 } },
+        { input: { hour: 3, month: 10 }, output: { temperature: 6 } },
+        { input: { hour: 6, month: 10 }, output: { temperature: 8 } },
+        { input: { hour: 12, month: 10 }, output: { temperature: 13 } },
+        { input: { hour: 18, month: 10 }, output: { temperature: 11 } },
+        { input: { hour: 21, month: 10 }, output: { temperature: 9 } },
 
         // November
-        { input: { hour: 0, month: 11 }, output: { temperature: 3 / 50 } },
-        { input: { hour: 3, month: 11 }, output: { temperature: 2 / 50 } },
-        { input: { hour: 6, month: 11 }, output: { temperature: 4 / 50 } },
-        { input: { hour: 12, month: 11 }, output: { temperature: 7 / 50 } },
-        { input: { hour: 18, month: 11 }, output: { temperature: 5 / 50 } },
-        { input: { hour: 21, month: 11 }, output: { temperature: 4 / 50 } },
+        { input: { hour: 0, month: 11 }, output: { temperature: 3 } },
+        { input: { hour: 3, month: 11 }, output: { temperature: 2 } },
+        { input: { hour: 6, month: 11 }, output: { temperature: 4 } },
+        { input: { hour: 12, month: 11 }, output: { temperature: 7 } },
+        { input: { hour: 18, month: 11 }, output: { temperature: 5 } },
+        { input: { hour: 21, month: 11 }, output: { temperature: 4 } },
 
         // December
-        { input: { hour: 0, month: 12 }, output: { temperature: 0 / 50 } },
-        { input: { hour: 3, month: 12 }, output: { temperature: -1 / 50 } },
-        { input: { hour: 6, month: 12 }, output: { temperature: 0 / 50 } },
-        { input: { hour: 12, month: 12 }, output: { temperature: 3 / 50 } },
-        { input: { hour: 18, month: 12 }, output: { temperature: 2 / 50 } },
-        { input: { hour: 21, month: 12 }, output: { temperature: 1 / 50 } },
+        { input: { hour: 0, month: 12 }, output: { temperature: 0 } },
+        { input: { hour: 3, month: 12 }, output: { temperature: -1 } },
+        { input: { hour: 6, month: 12 }, output: { temperature: 0 } },
+        { input: { hour: 12, month: 12 }, output: { temperature: 3 } },
+        { input: { hour: 18, month: 12 }, output: { temperature: 2 } },
+        { input: { hour: 21, month: 12 }, output: { temperature: 1 } },
       ];
 
-      // Create the neural network with one hidden layer of 5 neurons
-      const net = new brain.NeuralNetwork({ hiddenLayers: [5] });
+      const normalizedTrainingData = trainingData.map((item) => ({
+        input: {
+          hour: item.input.hour / 23,
+          month: item.input.month / 12,
+        },
+        output: {
+          temperature: item.output.temperature / 50,
+        },
+      }));
+
+      // Create the neural network
+      const net = new brain.NeuralNetwork({ hiddenLayers: [10, 5] });
 
       // Train the model
-      net.train(trainingData, {
-        iterations: 5000,
+      net.train(normalizedTrainingData, {
+        iterations: 30000,
         learningRate: 0.05,
         errorThresh: 0.005,
         log: true,
@@ -224,7 +234,7 @@
           return;
         }
 
-        const input = { hour: hour, month: month };
+        const input = { hour: hour / 23, month: month / 12 };
         const prediction = +(net.run(input).temperature * 50).toFixed(1); // scale back to °C
 
         document.getElementById(
@@ -248,7 +258,7 @@
         }
         const hours = Array.from({ length: 24 }, (_, i) => i);
         const temps = hours.map((hour) => {
-          const input = { hour: hour, month: month };
+          const input = { hour: hour / 23, month: month / 12 };
           return +(net.run(input).temperature * 50).toFixed(1); // scale back to °C
         });
 
