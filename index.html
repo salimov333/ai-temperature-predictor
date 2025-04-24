@@ -7,12 +7,23 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+      html {
+        font-size: 16px;
+      }
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         background: #f4f4f9;
         text-align: center;
         padding: 40px;
         direction: ltr;
+      }
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
       }
       h1,
       h2 {
@@ -48,7 +59,8 @@
         color: #222;
       }
       canvas {
-        max-width: 600px;
+        max-width: 100%;
+        height: 400px !important; /* increase default height */
         margin: 40px auto;
         display: block;
       }
@@ -65,39 +77,52 @@
         border-radius: 4px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       }
+      @media (max-width: 768px) {
+        html {
+          font-size: 15px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        html {
+          font-size: 14px;
+        }
+      }
     </style>
   </head>
   <body>
-    <h1>Temperature Predictor</h1>
+    <div class="container">
+      <h1>Temperature Predictor</h1>
 
-    <label
-      >Hour (0 - 23):<br /><input type="number" id="hour" min="0" max="23"
-    /></label>
-    <label
-      >Month (1 - 12):<br /><input
-        type="number"
-        id="month_predict"
-        min="1"
-        max="12"
-    /></label>
-    <button onclick="predictNow()">Predict Now</button>
-    <p id="result"></p>
+      <label
+        >Hour (0 - 23):<br /><input type="number" id="hour" min="0" max="23"
+      /></label>
+      <label
+        >Month (1 - 12):<br /><input
+          type="number"
+          id="month_predict"
+          min="1"
+          max="12"
+      /></label>
+      <button onclick="predictNow()">Predict Now</button>
+      <p id="result"></p>
 
-    <h2>Prediction History</h2>
-    <ul id="history"></ul>
+      <h2>Prediction History</h2>
+      <ul id="history"></ul>
 
-    <label
-      >Month for Chart (1 - 12):<br /><input
-        type="number"
-        id="month"
-        min="1"
-        max="12"
-    /></label>
-    <button onclick="drawGraph()">Draw Chart</button>
-    <button onclick="downloadChart()">Download Chart as Image</button>
-    <button onclick="saveModel()">Save Model as File</button>
+      <label
+        >Month for Chart (1 - 12):<br /><input
+          type="number"
+          id="month"
+          min="1"
+          max="12"
+      /></label>
+      <button onclick="drawGraph()">Draw Chart</button>
+      <button onclick="downloadChart()">Download Chart as Image</button>
+      <button onclick="saveModel()">Save Model as File</button>
 
-    <canvas id="tempChart"></canvas>
+      <canvas id="tempChart"></canvas>
+    </div>
 
     <script>
       // Training data: input = {hour, month}, output = temperature
@@ -270,7 +295,7 @@
       }
 
       let chart;
-
+      let monthToSave = "";
       // Draw line chart for a specific month
       function drawGraph() {
         const month = parseFloat(document.getElementById("month").value);
@@ -278,6 +303,7 @@
           alert("Please enter a valid month (1-12) to draw the chart.");
           return;
         }
+        monthToSave = month;
         const hours = Array.from({ length: 24 }, (_, i) => i);
         const temps = hours.map((hour) => {
           const input = { hour: hour / 23, month: month / 12 };
@@ -333,7 +359,7 @@
         tmpCtx.drawImage(canvas, 0, 0);
 
         const link = document.createElement("a");
-        link.download = "temperature_chart.png";
+        link.download = monthToSave ? `temperature_chart-${monthToSave}.png` : "temperature_chart.png";
         link.href = tmp.toDataURL("image/png");
         link.click();
       }
