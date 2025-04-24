@@ -29,6 +29,28 @@
       h2 {
         color: #333;
       }
+      #progress-container {
+        margin: 20px 0;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: none;
+      }
+      #progress-container span {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      #progress-bar {
+        width: 100%;
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      #progress-bar::-webkit-progress-value {
+        background: #3498db;
+        transition: width 0.5s ease;
+      }
       label {
         margin: 10px;
         display: block;
@@ -92,7 +114,11 @@
   </head>
   <body>
     <div class="container">
-      <h1>Temperature Predictor</h1>
+      <h1>AI 🧠 Temperature Predictor</h1>
+      <div id="progress-container">
+        <span></span>
+        <progress value="0" max="100" id="progress-bar"></progress>
+      </div>
 
       <label
         >Hour (0 - 23):<br /><input type="number" id="hour" min="0" max="23"
@@ -259,13 +285,53 @@
       const net = new brain.NeuralNetwork({ hiddenLayers: [10, 5] });
 
       // Train the model
+      const totalIterations = 10000;
+      const progressBar = document.getElementById("progress-bar");
+      const progressContainer = document.getElementById("progress-container");
+
+      progressContainer.style.display = "block";
+
       net.train(normalizedTrainingData, {
-        iterations: 30000,
+        iterations: totalIterations,
         learningRate: 0.05,
         errorThresh: 0.005,
-        log: true,
-        logPeriod: 1000,
+        log: false,
+        callbackPeriod: 100,
+        callback: function (status) {
+          const percent = Math.round(
+            (status.iterations / totalIterations) * 100
+          );
+
+          progressBar.value = percent;
+
+          progressContainer.querySelector(
+            "span"
+          ).textContent = `Training Progress...⭮: ${percent}%`;
+
+          console.log(
+            `Progress: ${percent}%, Error: ${status.error.toFixed(5)}`
+          );
+        },
       });
+
+      function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      async function showTrainingCompletion(element, initialDelay) {
+        await delay(totalIterations * 0.2);
+        progressContainer.textContent =
+          "Training completed successfully! Go 🚀";
+
+        await delay(totalIterations * 0.05);
+        progressContainer.style.fontWeight = "700";
+        progressContainer.style.color = "green";
+
+        await delay(totalIterations * 0.3);
+        progressContainer.style.display = "none";
+      }
+
+      showTrainingCompletion(progressContainer, totalIterations);
 
       // Predict temperature based on input hour and month
       function predictNow() {
@@ -359,7 +425,9 @@
         tmpCtx.drawImage(canvas, 0, 0);
 
         const link = document.createElement("a");
-        link.download = monthToSave ? `temperature_chart-${monthToSave}.png` : "temperature_chart.png";
+        link.download = monthToSave
+          ? `temperature_chart-${monthToSave}.png`
+          : "temperature_chart.png";
         link.href = tmp.toDataURL("image/png");
         link.click();
       }
