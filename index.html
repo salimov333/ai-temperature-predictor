@@ -199,15 +199,36 @@
         { input: { hour: 21, month: 12 }, output: { temperature: 1 } },
       ];
 
-      const normalizedTrainingData = trainingData.map((item) => ({
-        input: {
-          hour: item.input.hour / 23,
-          month: item.input.month / 12,
-        },
-        output: {
-          temperature: item.output.temperature / 50,
-        },
-      }));
+      let minTemp = Infinity;
+      let maxTemp = -Infinity;
+
+      function normalizeData(data) {
+        // Step 1: find min and max temperatures
+        data.forEach((item) => {
+          if (item.output.temperature < minTemp)
+            minTemp = item.output.temperature;
+          if (item.output.temperature > maxTemp)
+            maxTemp = item.output.temperature;
+        });
+
+        // Step 2: normalize to 0–1
+        return data.map((item) => ({
+          input: {
+            hour: item.input.hour / 23,
+            month: item.input.month / 12,
+          },
+          output: {
+            temperature:
+              (item.output.temperature - minTemp) / (maxTemp - minTemp),
+          },
+        }));
+      }
+
+      function denormalize(value) {
+        return value * (maxTemp - minTemp) + minTemp;
+      }
+
+      const normalizedTrainingData = normalizeData(trainingData);
 
       // Create the neural network
       const net = new brain.NeuralNetwork({ hiddenLayers: [10, 5] });
@@ -235,7 +256,8 @@
         }
 
         const input = { hour: hour / 23, month: month / 12 };
-        const prediction = +(net.run(input).temperature * 50).toFixed(1); // scale back to °C
+        const raw = net.run(input).temperature;
+        const prediction = +denormalize(raw).toFixed(1);
 
         document.getElementById(
           "result"
@@ -259,7 +281,8 @@
         const hours = Array.from({ length: 24 }, (_, i) => i);
         const temps = hours.map((hour) => {
           const input = { hour: hour / 23, month: month / 12 };
-          return +(net.run(input).temperature * 50).toFixed(1); // scale back to °C
+          const raw = net.run(input).temperature;
+          return +denormalize(raw).toFixed(1);
         });
 
         const ctx = document.getElementById("tempChart").getContext("2d");
