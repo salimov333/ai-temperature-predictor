@@ -30,7 +30,6 @@
             value="0"
             max="100"
             id="progress-bar"
-            title="Training Progress"
             aria-label="Model training progress"
           ></progress>
         </div>
@@ -77,8 +76,7 @@
               max="23"
               placeholder="Enter hour"
               required
-              title="Enter the hour of the day (0 to 23)"
-              aria-describedby="hour-help"
+              aria-label="hour-help"
             />
             <span id="hour-help" class="tooltip" role="tooltip"
               >24-hour format (e.g., 14 for 2 PM)</span
@@ -87,12 +85,7 @@
 
           <div class="input-group">
             <label for="month_predict">Month:</label>
-            <select
-              id="month_predict"
-              required
-              title="Select prediction month"
-              aria-describedby="month-help"
-            >
+            <select id="month_predict" required aria-label="month-help">
               <option value="">Choose Month</option>
               <option value="1">January</option>
               <option value="2">February</option>
@@ -117,6 +110,7 @@
             id="predictBtn"
             disabled
             title="Click to predict temperature"
+            aria-label="Predict temperature"
           >
             Predict Now
           </button>
@@ -144,11 +138,13 @@
         <h2>Monthly Temperature Profile</h2>
         <div class="input-group">
           <label for="month_chart">Select Month:</label>
+
           <select
             id="month_chart"
             required
             title="Select month for temperature chart"
           >
+            <option value="">Choose Month</option>
             <option value="1">January</option>
             <option value="2">February</option>
             <option value="3">March</option>
