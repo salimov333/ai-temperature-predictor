@@ -21,5 +21,4 @@ jobs:
         with:
           generate_release_notes: true # Automatically generates nice release notes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub provides this token automatically
-          
+          GITHUB_TOKEN: ${{ secrets.PAT_FOR_RELEASES }}
