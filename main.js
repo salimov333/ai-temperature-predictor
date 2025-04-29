@@ -109,12 +109,42 @@ worker.onmessage = function (e) {
 };
 
 // Cancel training
+// Updated cancel handler
 cancelTrainingBtn.addEventListener("click", () => {
-    worker.terminate();
-    worker = new Worker("worker.js");
-    progressText.innerHTML = "⏹ Training Cancelled";
-    trainingStatus.textContent = "Cancelled";
-    enableUI();
+    try {
+        // Immediately disable cancel button
+        cancelTrainingBtn.disabled = true;
+
+        // Terminate current worker
+        if (worker) {
+            worker.terminate();
+            worker = null;
+        }
+
+        // Reset training state
+        trainedModel = null;
+        minTemp = maxTemp = undefined;
+        modelError = null;
+
+        // Update UI
+        progressBar.value = 0;
+        trainingError.textContent = "N/A";
+        progressText.innerHTML = "⏹ Training Cancelled";
+        trainingStatus.textContent = "Cancelled";
+
+        // Hide progress container after delay
+        setTimeout(() => {
+            progressContainer.style.display = "none";
+            enableUI();
+        }, 1500);
+
+        // Create fresh worker instance
+        worker = new Worker("worker.js");
+    } catch (error) {
+        console.error("Cancel error:", error);
+        displayError("Failed to cancel training");
+        enableUI();
+    }
 });
 
 // Prediction logic
