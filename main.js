@@ -4,7 +4,7 @@ let minTemp, maxTemp;
 let chart = null;
 let trainingData = [];
 let modelError = null;
-let totalIterations = 40000;
+let totalIterations = 30000;
 let learningRate = 0.001;
 
 // DOM Elements
