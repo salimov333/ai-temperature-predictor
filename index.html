@@ -2,445 +2,190 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>AI Temperature Predictor</title>
-    <script src="https://cdn.jsdelivr.net/npm/brain.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-      html {
-        font-size: 16px;
-      }
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: #f4f4f9;
-        text-align: center;
-        padding: 40px;
-        direction: ltr;
-      }
-      .container {
-        max-width: 700px;
-        margin: 0 auto;
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-      }
-      h1,
-      h2 {
-        color: #333;
-      }
-      #progress-container {
-        margin: 20px 0;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        display: none;
-      }
-      #progress-container span {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
-      #progress-bar {
-        width: 100%;
-        height: 20px;
-        border-radius: 10px;
-        overflow: hidden;
-      }
-      #progress-bar::-webkit-progress-value {
-        background: #3498db;
-        transition: width 0.5s ease;
-      }
-      label {
-        margin: 10px;
-        display: block;
-        font-size: 18px;
-      }
-      input[type="number"] {
-        padding: 6px;
-        font-size: 16px;
-        width: 80px;
-        margin-top: 5px;
-      }
-      button {
-        margin: 10px 5px;
-        padding: 10px 20px;
-        font-size: 16px;
-        background: #3498db;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-      button:hover {
-        background: #2980b9;
-      }
-      #result {
-        margin-top: 20px;
-        font-size: 20px;
-        color: #222;
-      }
-      canvas {
-        max-width: 100%;
-        height: 400px !important; /* increase default height */
-        margin: 40px auto;
-        display: block;
-      }
-      #history {
-        text-align: left;
-        max-width: 600px;
-        margin: 0 auto;
-      }
-      #history li {
-        list-style-type: none;
-        background: #fff;
-        margin-bottom: 5px;
-        padding: 10px;
-        border-radius: 4px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-      }
-      @media (max-width: 768px) {
-        html {
-          font-size: 15px;
-        }
-      }
-
-      @media (max-width: 480px) {
-        html {
-          font-size: 14px;
-        }
-      }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="AI Temperature Prediction for Leipzig, Germany"
+    />
+    <title>Leipzig Temperature Predictor</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
+
   <body>
     <div class="container">
-      <h1>AI 🧠 Temperature Predictor</h1>
-      <div id="progress-container">
-        <span></span>
-        <progress value="0" max="100" id="progress-bar"></progress>
-      </div>
+      <h1>Leipzig 🌡️ AI Temperature Predictor</h1>
+      <p class="description">
+        Predict hourly temperatures using neural networks trained on Leipzig's
+        historical weather patterns. The training Data file with 288 entries for
+        Leipzig in 2024 based on realistic data.
+      </p>
 
-      <label
-        >Hour (0 - 23):<br /><input type="number" id="hour" min="0" max="23"
-      /></label>
-      <label
-        >Month (1 - 12):<br /><input
-          type="number"
-          id="month_predict"
-          min="1"
-          max="12"
-      /></label>
-      <button onclick="predictNow()">Predict Now</button>
-      <p id="result"></p>
+      <!-- Training Section -->
+      <section id="training-section">
+        <div id="progress-container">
+          <span id="progress-text">
+            <span class="spinner"></span> Training Model...
+          </span>
+          <progress
+            value="0"
+            max="100"
+            id="progress-bar"
+            title="Training Progress"
+            aria-label="Model training progress"
+          ></progress>
+        </div>
+        <div id="training-controls">
+          <button
+            id="cancelTrainingBtn"
+            disabled
+            title="Click to cancel training"
+            aria-label="Cancel training process"
+          >
+            Cancel Training
+          </button>
+        </div>
+        <div id="training-info">
+          <p>
+            Training Status:
+            <span
+              id="training-status"
+              title="Current status of the model training process"
+              >Initializing...</span
+            >
+          </p>
+          <p>
+            Training Error:
+            <span
+              id="training-error"
+              title="Error value during training. Lower is better."
+              >N/A</span
+            >
+          </p>
+        </div>
+      </section>
 
-      <h2>Prediction History</h2>
-      <ul id="history"></ul>
+      <!-- Prediction Section -->
+      <section id="prediction-section">
+        <h2>Hourly Prediction</h2>
+        <form id="prediction-form">
+          <div class="input-group">
+            <label for="hour">Hour (0 - 23):</label>
+            <input
+              type="number"
+              id="hour"
+              min="0"
+              max="23"
+              placeholder="Enter hour"
+              required
+              title="Enter the hour of the day (0 to 23)"
+              aria-describedby="hour-help"
+            />
+            <span id="hour-help" class="tooltip" role="tooltip"
+              >24-hour format (e.g., 14 for 2 PM)</span
+            >
+          </div>
 
-      <label
-        >Month for Chart (1 - 12):<br /><input
-          type="number"
-          id="month"
-          min="1"
-          max="12"
-      /></label>
-      <button onclick="drawGraph()">Draw Chart</button>
-      <button onclick="downloadChart()">Download Chart as Image</button>
-      <button onclick="saveModel()">Save Model as File</button>
+          <div class="input-group">
+            <label for="month_predict">Month:</label>
+            <select
+              id="month_predict"
+              required
+              title="Select prediction month"
+              aria-describedby="month-help"
+            >
+              <option value="">Choose Month</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+            <span id="month-help" class="tooltip" role="tooltip"
+              >Based on Leipzig's climate patterns</span
+            >
+          </div>
 
-      <canvas id="tempChart"></canvas>
+          <button
+            type="submit"
+            id="predictBtn"
+            disabled
+            title="Click to predict temperature"
+          >
+            Predict Now
+          </button>
+          <p id="result"></p>
+          <div id="prediction-metrics">
+            <p class="disclaimer">
+              <small>
+                Note: Predictions reflect typical Leipzig temperature
+                patterns.<br />
+                Actual weather may vary due to atmospheric conditions.
+              </small>
+            </p>
+          </div>
+        </form>
+      </section>
+
+      <!-- History Section -->
+      <section id="history-section">
+        <h2>Recent Predictions</h2>
+        <ul id="history" aria-live="polite"></ul>
+      </section>
+
+      <!-- Chart Section -->
+      <section id="chart-section">
+        <h2>Monthly Temperature Profile</h2>
+        <div class="input-group">
+          <label for="month_chart">Select Month:</label>
+          <select
+            id="month_chart"
+            required
+            title="Select month for temperature chart"
+          >
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+        </div>
+        <div class="chart-controls">
+          <button id="drawChartBtn" disabled title="Generate temperature chart">
+            Show Chart
+          </button>
+          <button id="downloadChartBtn" disabled title="Download chart image">
+            Download Chart
+          </button>
+        </div>
+        <canvas
+          id="tempChart"
+          aria-label="Temperature chart visualising hourly predictions"
+          role="img"
+        ></canvas>
+      </section>
+
+      <footer>
+        <p>&copy; 2024 Leipzig Temperature Predictor</p>
+        <p><small>Data patterns based on DWD historical records</small></p>
+      </footer>
     </div>
 
-    <script>
-      // Training data: input = {hour, month}, output = temperature
-      const trainingData = [
-        // January
-        { input: { hour: 0, month: 1 }, output: { temperature: -1 } },
-        { input: { hour: 3, month: 1 }, output: { temperature: -2 } },
-        { input: { hour: 6, month: 1 }, output: { temperature: -2 } },
-        { input: { hour: 12, month: 1 }, output: { temperature: 1 } },
-        { input: { hour: 18, month: 1 }, output: { temperature: 0 } },
-        { input: { hour: 21, month: 1 }, output: { temperature: -1 } },
-
-        // February
-        { input: { hour: 0, month: 2 }, output: { temperature: 0 } },
-        { input: { hour: 3, month: 2 }, output: { temperature: -1 } },
-        { input: { hour: 6, month: 2 }, output: { temperature: 0 } },
-        { input: { hour: 12, month: 2 }, output: { temperature: 3 } },
-        { input: { hour: 18, month: 2 }, output: { temperature: 2 } },
-        { input: { hour: 21, month: 2 }, output: { temperature: 1 } },
-
-        // March
-        { input: { hour: 0, month: 3 }, output: { temperature: 2 } },
-        { input: { hour: 3, month: 3 }, output: { temperature: 1 } },
-        { input: { hour: 6, month: 3 }, output: { temperature: 2 } },
-        { input: { hour: 12, month: 3 }, output: { temperature: 7 } },
-        { input: { hour: 18, month: 3 }, output: { temperature: 5 } },
-        { input: { hour: 21, month: 3 }, output: { temperature: 3 } },
-
-        // April
-        { input: { hour: 0, month: 4 }, output: { temperature: 5 } },
-        { input: { hour: 3, month: 4 }, output: { temperature: 4 } },
-        { input: { hour: 6, month: 4 }, output: { temperature: 6 } },
-        { input: { hour: 12, month: 4 }, output: { temperature: 12 } },
-        { input: { hour: 18, month: 4 }, output: { temperature: 10 } },
-        { input: { hour: 21, month: 4 }, output: { temperature: 7 } },
-
-        // May
-        { input: { hour: 0, month: 5 }, output: { temperature: 9 } },
-        { input: { hour: 3, month: 5 }, output: { temperature: 8 } },
-        { input: { hour: 6, month: 5 }, output: { temperature: 10 } },
-        { input: { hour: 12, month: 5 }, output: { temperature: 17 } },
-        { input: { hour: 18, month: 5 }, output: { temperature: 15 } },
-        { input: { hour: 21, month: 5 }, output: { temperature: 12 } },
-
-        // June
-        { input: { hour: 0, month: 6 }, output: { temperature: 12 } },
-        { input: { hour: 3, month: 6 }, output: { temperature: 11 } },
-        { input: { hour: 6, month: 6 }, output: { temperature: 13 } },
-        { input: { hour: 12, month: 6 }, output: { temperature: 20 } },
-        { input: { hour: 18, month: 6 }, output: { temperature: 18 } },
-        { input: { hour: 21, month: 6 }, output: { temperature: 15 } },
-
-        // July
-        { input: { hour: 0, month: 7 }, output: { temperature: 14 } },
-        { input: { hour: 3, month: 7 }, output: { temperature: 13 } },
-        { input: { hour: 6, month: 7 }, output: { temperature: 15 } },
-        { input: { hour: 12, month: 7 }, output: { temperature: 22 } },
-        { input: { hour: 18, month: 7 }, output: { temperature: 20 } },
-        { input: { hour: 21, month: 7 }, output: { temperature: 17 } },
-
-        // August
-        { input: { hour: 0, month: 8 }, output: { temperature: 13 } },
-        { input: { hour: 3, month: 8 }, output: { temperature: 12 } },
-        { input: { hour: 6, month: 8 }, output: { temperature: 14 } },
-        { input: { hour: 12, month: 8 }, output: { temperature: 21 } },
-        { input: { hour: 18, month: 8 }, output: { temperature: 19 } },
-        { input: { hour: 21, month: 8 }, output: { temperature: 16 } },
-
-        // September
-        { input: { hour: 0, month: 9 }, output: { temperature: 10 } },
-        { input: { hour: 3, month: 9 }, output: { temperature: 9 } },
-        { input: { hour: 6, month: 9 }, output: { temperature: 11 } },
-        { input: { hour: 12, month: 9 }, output: { temperature: 17 } },
-        { input: { hour: 18, month: 9 }, output: { temperature: 15 } },
-        { input: { hour: 21, month: 9 }, output: { temperature: 12 } },
-
-        // October
-        { input: { hour: 0, month: 10 }, output: { temperature: 7 } },
-        { input: { hour: 3, month: 10 }, output: { temperature: 6 } },
-        { input: { hour: 6, month: 10 }, output: { temperature: 8 } },
-        { input: { hour: 12, month: 10 }, output: { temperature: 13 } },
-        { input: { hour: 18, month: 10 }, output: { temperature: 11 } },
-        { input: { hour: 21, month: 10 }, output: { temperature: 9 } },
-
-        // November
-        { input: { hour: 0, month: 11 }, output: { temperature: 3 } },
-        { input: { hour: 3, month: 11 }, output: { temperature: 2 } },
-        { input: { hour: 6, month: 11 }, output: { temperature: 4 } },
-        { input: { hour: 12, month: 11 }, output: { temperature: 7 } },
-        { input: { hour: 18, month: 11 }, output: { temperature: 5 } },
-        { input: { hour: 21, month: 11 }, output: { temperature: 4 } },
-
-        // December
-        { input: { hour: 0, month: 12 }, output: { temperature: 0 } },
-        { input: { hour: 3, month: 12 }, output: { temperature: -1 } },
-        { input: { hour: 6, month: 12 }, output: { temperature: 0 } },
-        { input: { hour: 12, month: 12 }, output: { temperature: 3 } },
-        { input: { hour: 18, month: 12 }, output: { temperature: 2 } },
-        { input: { hour: 21, month: 12 }, output: { temperature: 1 } },
-      ];
-
-      let minTemp = Infinity;
-      let maxTemp = -Infinity;
-
-      function normalizeData(data) {
-        // Step 1: find min and max temperatures
-        data.forEach((item) => {
-          if (item.output.temperature < minTemp)
-            minTemp = item.output.temperature;
-          if (item.output.temperature > maxTemp)
-            maxTemp = item.output.temperature;
-        });
-
-        // Step 2: normalize to 0–1
-        return data.map((item) => ({
-          input: {
-            hour: item.input.hour / 23,
-            month: item.input.month / 12,
-          },
-          output: {
-            temperature:
-              (item.output.temperature - minTemp) / (maxTemp - minTemp),
-          },
-        }));
-      }
-
-      function denormalize(value) {
-        return value * (maxTemp - minTemp) + minTemp;
-      }
-
-      const normalizedTrainingData = normalizeData(trainingData);
-
-      // Create the neural network
-      const net = new brain.NeuralNetwork({ hiddenLayers: [10, 5] });
-
-      // Train the model
-      const totalIterations = 10000;
-      const progressBar = document.getElementById("progress-bar");
-      const progressContainer = document.getElementById("progress-container");
-
-      progressContainer.style.display = "block";
-
-      net.train(normalizedTrainingData, {
-        iterations: totalIterations,
-        learningRate: 0.05,
-        errorThresh: 0.005,
-        log: false,
-        callbackPeriod: 100,
-        callback: function (status) {
-          const percent = Math.round(
-            (status.iterations / totalIterations) * 100
-          );
-
-          progressBar.value = percent;
-
-          progressContainer.querySelector(
-            "span"
-          ).textContent = `Training Progress...⭮: ${percent}%`;
-
-          console.log(
-            `Progress: ${percent}%, Error: ${status.error.toFixed(5)}`
-          );
-        },
-      });
-
-      function delay(ms) {
-        return new Promise((resolve) => setTimeout(resolve, ms));
-      }
-
-      async function showTrainingCompletion(element, initialDelay) {
-        await delay(totalIterations * 0.2);
-        progressContainer.textContent =
-          "Training completed successfully! Go 🚀";
-
-        await delay(totalIterations * 0.05);
-        progressContainer.style.fontWeight = "700";
-        progressContainer.style.color = "green";
-
-        await delay(totalIterations * 0.3);
-        progressContainer.style.display = "none";
-      }
-
-      showTrainingCompletion(progressContainer, totalIterations);
-
-      // Predict temperature based on input hour and month
-      function predictNow() {
-        const hour = parseFloat(document.getElementById("hour").value);
-        const month = parseFloat(
-          document.getElementById("month_predict").value
-        );
-
-        if (isNaN(hour) || isNaN(month)) {
-          document.getElementById("result").textContent =
-            "Please enter both hour and month.";
-          return;
-        }
-
-        const input = { hour: hour / 23, month: month / 12 };
-        const raw = net.run(input).temperature;
-        const prediction = +denormalize(raw).toFixed(1);
-
-        document.getElementById(
-          "result"
-        ).textContent = `Predicted Temperature: ${prediction}°C`;
-
-        const historyEntry = `Hour: ${hour}:00, Month: ${month} → ${prediction}°C`;
-        const li = document.createElement("li");
-        li.textContent = historyEntry;
-        document.getElementById("history").prepend(li);
-      }
-
-      let chart;
-      let monthToSave = "";
-      // Draw line chart for a specific month
-      function drawGraph() {
-        const month = parseFloat(document.getElementById("month").value);
-        if (isNaN(month) || month < 1 || month > 12) {
-          alert("Please enter a valid month (1-12) to draw the chart.");
-          return;
-        }
-        monthToSave = month;
-        const hours = Array.from({ length: 24 }, (_, i) => i);
-        const temps = hours.map((hour) => {
-          const input = { hour: hour / 23, month: month / 12 };
-          const raw = net.run(input).temperature;
-          return +denormalize(raw).toFixed(1);
-        });
-
-        const ctx = document.getElementById("tempChart").getContext("2d");
-        if (chart) chart.destroy();
-        chart = new Chart(ctx, {
-          type: "line",
-          data: {
-            labels: hours.map((h) => `${h}:00`),
-            datasets: [
-              {
-                label: `Temperature in Month ${month}`,
-                data: temps,
-                fill: false,
-                borderColor: "#e67e22",
-                tension: 0.3,
-              },
-            ],
-          },
-          options: {
-            scales: {
-              y: {
-                title: { display: true, text: "Temperature (°C)" },
-              },
-              x: {
-                title: { display: true, text: "Hour of Day" },
-              },
-            },
-          },
-        });
-      }
-
-      // Download the chart as PNG
-      function downloadChart() {
-        const canvas = document.getElementById("tempChart");
-        const ctx = canvas.getContext("2d");
-
-        // draw white background before exporting
-        const tmp = document.createElement("canvas");
-        tmp.width = canvas.width;
-        tmp.height = canvas.height;
-        const tmpCtx = tmp.getContext("2d");
-
-        // fill background with white
-        tmpCtx.fillStyle = "#ffffff";
-        tmpCtx.fillRect(0, 0, tmp.width, tmp.height);
-
-        // draw the chart onto the white background
-        tmpCtx.drawImage(canvas, 0, 0);
-
-        const link = document.createElement("a");
-        link.download = monthToSave
-          ? `temperature_chart-${monthToSave}.png`
-          : "temperature_chart.png";
-        link.href = tmp.toDataURL("image/png");
-        link.click();
-      }
-
-      // Save the trained model as a JSON file
-      function saveModel() {
-        const modelJSON = JSON.stringify(net.toJSON(), null, 2);
-        const blob = new Blob([modelJSON], { type: "application/json" });
-        const link = document.createElement("a");
-        link.download = "temperature_model.json";
-        link.href = URL.createObjectURL(blob);
-        link.click();
-      }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brain.js"></script>
+    <script src="main.js"></script>
   </body>
 </html>
