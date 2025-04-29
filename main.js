@@ -250,6 +250,7 @@ drawChartBtn.addEventListener("click", () => {
     }
 
     try {
+        clearError();
         const net = new brain.NeuralNetwork();
         net.fromJSON(trainedModel);
         const hours = Array.from({ length: 24 }, (_, i) => i);
