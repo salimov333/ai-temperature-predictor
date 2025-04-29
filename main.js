@@ -23,15 +23,28 @@ const monthPredictInput = document.getElementById("month_predict");
 const monthChartInput = document.getElementById("month_chart");
 const predictionForm = document.getElementById("prediction-form");
 const cancelTrainingBtn = document.getElementById("cancelTrainingBtn");
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
 // Load prediction history from localStorage
 document.addEventListener('DOMContentLoaded', () => {
     const savedHistory = JSON.parse(localStorage.getItem('leipzigPredictions')) || [];
-    savedHistory.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = `Hour: ${item.hour}:00, Month: ${item.month} → ${item.prediction}°C`;
-        historyList.appendChild(li);
-    });
+    if (savedHistory.length === 0) {
+        // Add empty state only if history is truly empty
+        if (historyList.children.length === 0) {
+            const emptyState = document.createElement('li');
+            emptyState.classList.add('empty-state');
+            emptyState.textContent = "No predictions yet";
+            historyList.appendChild(emptyState);
+        }
+    } else {
+        savedHistory.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = `Hour: ${item.hour}:00, Month: ${item.month} → ${item.prediction}°C`;
+            historyList.appendChild(li);
+        });
+    }
+    // Update clear button state
+    updateClearButtonState();
 });
 
 function disableUI() {
@@ -40,8 +53,9 @@ function disableUI() {
 }
 
 function enableUI() {
-    [predictBtn, drawChartBtn, downloadChartBtn, hourInput, monthPredictInput, monthChartInput].forEach(el => el.disabled = false);
+    [predictBtn, drawChartBtn, downloadChartBtn, hourInput, monthPredictInput, monthChartInput, clearHistoryBtn].forEach(el => el.disabled = false);
     cancelTrainingBtn.disabled = true;
+    updateClearButtonState();
 }
 
 function displayError(message) {
@@ -164,11 +178,18 @@ predictionForm.addEventListener("submit", (e) => {
 
         // Update UI
         resultText.textContent = `Predicted Temperature: ${prediction}°C`;
+        // Remove empty state if present
+        const emptyState = historyList.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+        // Add new prediction to history
         const li = document.createElement("li");
         li.textContent = `Hour: ${hour}:00, Month: ${month} → ${prediction}°C`;
         historyList.prepend(li);
+        updateClearButtonState();
 
-        // Save to localStorage
+        // Update localStorage
         const history = JSON.parse(localStorage.getItem('leipzigPredictions')) || [];
         history.unshift({ hour, month, prediction });
         localStorage.setItem('leipzigPredictions', JSON.stringify(history.slice(0, 20)));
@@ -196,6 +217,29 @@ function validateInput(hour, month) {
     clearError();
     return true;
 }
+
+// Clear history functionality
+clearHistoryBtn.addEventListener('click', () => {
+    
+    // Clear from localStorage
+    localStorage.removeItem('leipzigPredictions');
+
+
+    // Clear from UI
+    historyList.innerHTML = '';
+
+    // Show feedback
+    const feedback = document.createElement('li');
+    feedback.textContent = "History cleared successfully";
+    feedback.style.color = "#27ae60";
+    historyList.appendChild(feedback);
+
+    // Remove feedback after 2 seconds
+    setTimeout(() => {
+        feedback.remove();
+        updateClearButtonState();
+    }, 2000);
+});
 
 // Chart functions
 drawChartBtn.addEventListener("click", () => {
@@ -265,6 +309,13 @@ function createTemperatureGradient(ctx) {
     gradient.addColorStop(0.5, "#FFE66D"); // Warm
     gradient.addColorStop(1, "#4ECDC4"); // Cool
     return gradient;
+}
+
+function updateClearButtonState() {
+    const hasRealPredictions = Array.from(historyList.children).some(
+        li => !li.classList.contains('empty-state')
+    );
+    clearHistoryBtn.disabled = !hasRealPredictions;
 }
 
 // Chart download

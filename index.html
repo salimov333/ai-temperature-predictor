@@ -129,7 +129,18 @@
 
       <!-- History Section -->
       <section id="history-section">
-        <h2>Recent Predictions</h2>
+        <div class="history-header">
+          <h2>Recent Predictions</h2>
+          <button
+            id="clearHistoryBtn"
+            class="clear-history"
+            aria-label="Clear prediction history"
+            title="Click to clear prediction history"
+            disabled
+          >
+            Clear History
+          </button>
+        </div>
         <ul id="history" aria-live="polite"></ul>
       </section>
 

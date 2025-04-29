@@ -176,6 +176,24 @@ button:disabled {
     color: var(--primary);
 }
 
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.clear-history {
+    background: var(--danger);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.clear-history:hover {
+    background: #c0392b;
+}
+
+
 #history {
     list-style: none;
     padding: 0;
@@ -274,6 +292,17 @@ canvas {
     #result {
         font-size: 1.2rem;
     }
+
+    .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .clear-history {
+        align-self: flex-end;
+    }
+
 }
 
 /* Accessibility */
